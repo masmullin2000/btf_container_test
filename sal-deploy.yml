@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: salapp-deployment
+spec:
+  selector:
+    matchLabels:
+      app: salapp
+#  replicas: 6
+  template:
+    metadata:
+      labels:
+        app: salapp
+    spec:
+      containers:
+      - name: salapp
+        image: registry:5000/my-rkt:latest
+        ports:
+        - containerPort: 80
+        securityContext:
+          allowPrivilegeEscalation: true
+          runAsUser: 0
+          capabilities:
+            add:
+              - NET_ADMIN
+          privileged: true
+        volumeMounts:
+        - mountPath: /sys/kernel/debug
+          name: trace-path
+      volumes:
+      - hostPath:
+          path: /sys/kernel/debug
+          type: DirectoryOrCreate
+        name: trace-path
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: salapp-service
+spec:
+  selector:
+    app: salapp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: salapp-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+      - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: salapp
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - salapp-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        port:
+          number: 80
+        host: salapp-service
