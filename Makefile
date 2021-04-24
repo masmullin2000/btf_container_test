@@ -1,5 +1,5 @@
 APP="my-rkt"
-REG="192.168.1.51:5000"
+REG="192.168.2.51:5000"
 
 .PHONY: build
 build: vmlinux
@@ -13,4 +13,4 @@ push: build
 
 .PHONY: vmlinux
 vmlinux:
-	cd sal_app && make vmlinux
+	cd sal_app && make clean && make vmlinux
