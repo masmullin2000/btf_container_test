@@ -53,8 +53,8 @@ async fn fly_rocket() -> Result<(), rocket::Error> {
 
 fn bump_memlock_rlimit() -> Result<()> {
     let rlimit = libc::rlimit {
-        rlim_cur: 128 << 20,
-        rlim_max: 128 << 20,
+        rlim_cur: 1 << 28,
+        rlim_max: 1 << 28,
     };
 
     unsafe {
